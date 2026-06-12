@@ -1,125 +1,67 @@
-# 💀 SKULL — Online Multiplayer Server
+# Skull Online — Release Bundle
 
-এটি SKULL bluffing গেমের জন্য **authoritative WebSocket server** (Node.js + Socket.IO)। সব গেম-state সার্ভারে থাকে — তাই cheat সম্ভব না, এবং কেউ disconnect হলে rejoin করতে পারে।
+এই zip-এ দুটো অংশ আছে:
 
----
-
-## 📦 ফাইলগুলো
-
-| ফাইল | কাজ |
-|---|---|
-| `server.js` | Express + Socket.IO server, room management |
-| `game.js` | Skull game engine (পুরো নিয়ম authoritative) |
-| `package.json` | Dependencies |
-| `render.yaml` | Render.com auto-deploy blueprint |
-| `.gitignore` | Git ignore rules |
-
----
-
-## 🚀 STEP 1 — GitHub-এ আপলোড
-
-### Option A: GitHub Web UI (সহজ)
-
-1. https://github.com/new -এ গিয়ে একটা নতুন repository বানাও — নাম দাও `skull-server` (Public বা Private দু'টোই চলবে)।
-2. "uploading an existing file" link-এ ক্লিক করো।
-3. এই zip ফাইলটা **extract** করে ভেতরের ফাইলগুলো (server.js, game.js, package.json, render.yaml, .gitignore) drag-and-drop করো। **`node_modules` ফোল্ডারটা আপলোড কোরো না** (যদি থাকে)।
-4. নিচে "Commit changes" চাপো।
-
-### Option B: Git Command Line
-
-```bash
-unzip skull-server.zip
-cd skull-server
-git init
-git add .
-git commit -m "Initial Skull server"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/skull-server.git
-git push -u origin main
+```
+skull-release/
+├── frontend/   ← আপনার ওয়েবসাইট (TanStack Start + React)
+└── backend/    ← Online multiplayer server (Node + Socket.IO)
 ```
 
 ---
 
-## ☁️ STEP 2 — Render-এ Deploy
+## 1) Backend (Render এ deploy)
 
-1. https://render.com -এ লগইন করো (GitHub দিয়ে sign up করতে পারো — free)।
-2. Dashboard থেকে **"New +"** → **"Web Service"** ক্লিক করো।
-3. তোমার `skull-server` repository select করো ("Connect" চাপতে হতে পারে GitHub permission দেওয়ার জন্য)।
-4. নিচের settings দাও (বেশিরভাগ auto fill হবে):
-   - **Name**: `skull-server` (যেকোনো নাম)
-   - **Region**: Singapore (বা তোমার কাছাকাছি)
-   - **Branch**: `main`
-   - **Runtime**: `Node`
-   - **Build Command**: `npm install`
-   - **Start Command**: `npm start`
-   - **Instance Type**: **Free**
-5. **"Create Web Service"** চাপো।
-6. ৩–৫ মিনিট wait করো। Build হলে উপরে একটা URL দেখাবে — দেখতে এরকম:
-   ```
-   https://skull-server-xxxx.onrender.com
-   ```
-7. সেই URL-এ ব্রাউজারে গিয়ে test করো — দেখাবে:
-   ```json
-   { "ok": true, "service": "skull-server", "rooms": 0 }
-   ```
-
-> ⚠️ **Free tier note**: ১৫ মিনিট inactivity-র পর Render server "sleep" করে। প্রথম request আসলে ৩০–৫০ sec time নেয় ঘুম থেকে উঠতে। প্রথম খেলোয়াড়কে একটু wait করতে হবে।
+1. GitHub এ নতুন repo বানান: `skull-server`
+2. `backend/` ফোল্ডারের **সব ফাইল** (node_modules বাদে) repo-তে upload করুন।
+3. https://render.com → **New +** → **Web Service** → আপনার repo সিলেক্ট করুন।
+4. সেটিংস:
+   - Runtime: **Node**
+   - Build Command: `npm install`
+   - Start Command: `npm start`
+   - Plan: **Free**
+5. Create → ৩-৫ মিনিট wait → URL পাবেন যেমন `https://skull-server-xxxx.onrender.com`
+6. সেই URL টা frontend এর `.env` এ বসান (নিচে দেখুন)।
 
 ---
 
-## 🔌 STEP 3 — Lovable Frontend-এ Connect
+## 2) Frontend (যে কোনো জায়গায় deploy)
 
-তোমার Lovable app-এ গিয়ে আমাকে বলো:
-
-> "আমার server URL: `https://skull-server-xxxx.onrender.com` — Online mode connect করে দাও"
-
-আমি `socket.io-client` add করব, online lobby UI বানাবো (room create / join), এবং এই URL-টা environment variable হিসেবে set করব।
-
----
-
-## 🔒 Production-এ CORS Restrict করতে
-
-Render dashboard → তোমার service → **Environment** ট্যাব → **Add Environment Variable**:
-
-- **Key**: `CORS_ORIGIN`
-- **Value**: তোমার Lovable published URL (যেমন `https://skull.lovable.app`)
-
-Save করলে server auto-restart হবে।
-
----
-
-## 🧪 Local-এ Test (optional)
-
+### Local এ চালাতে
 ```bash
-unzip skull-server.zip
-cd skull-server
-npm install
-npm start
-# → SKULL server listening on :3001
+cd frontend
+bun install        # বা npm install
+bun run dev        # http://localhost:8080
 ```
 
-ব্রাউজারে http://localhost:3001 খুলে test করতে পারো।
+### Online mode চালু করতে
+`frontend/.env` ফাইল বানিয়ে লিখুন:
+```
+VITE_SOCKET_URL=https://skull-server-xxxx.onrender.com
+```
+(আপনার Render URL দিয়ে replace করুন)
+
+### Build & Deploy
+```bash
+cd frontend
+bun run build
+```
+Output `frontend/.output/` এ যাবে। এটাকে Vercel / Netlify / Cloudflare Pages / Render Static Site — যে কোনো জায়গায় deploy করতে পারবেন।
 
 ---
 
-## 📡 Socket.IO Events (reference)
+## Game Modes
 
-| Client → Server | Payload | Response |
-|---|---|---|
-| `room:create` | `{ name }` | `{ ok, code, playerId }` |
-| `room:join` | `{ code, name }` | `{ ok, code, playerId }` |
-| `room:start` | — | `{ ok }` |
-| `game:place` | `{ card: "rose" \| "skull" }` | `{ ok }` |
-| `game:bid` | `{ amount }` | `{ ok }` |
-| `game:pass` | — | `{ ok }` |
-| `game:flip` | `{ targetId }` | `{ ok }` |
-| `game:loseCard` | `{ idx }` | `{ ok }` |
-| `game:rematch` | — | `{ ok }` |
+- **Pass & Play** — একই ডিভাইসে ২-৬ জন (turn এর মাঝে হাত auto-hide হয়)
+- **vs Bot** — ১-৫ টা AI bot এর সাথে
+- **Online** — Render server এর সাথে connect হয়ে room code দিয়ে খেলা
 
-| Server → Client | Payload |
-|---|---|
-| `state` | `{ lobby, game, youId }` — sanitized per viewer (অন্যের hand দেখা যাবে না) |
+## Rules (সংক্ষেপে)
+- প্রত্যেক রাউন্ডে প্রথমে সবাই একটা করে কার্ড face-down রাখে।
+- এরপর নিজের turn এ আপনি আরেকটা কার্ড রাখতে পারেন **অথবা** বাজি ধরতে পারেন।
+- কেউ বাজি ধরলে বাকিদের **বাড়াতে হবে নাহয় পাস** করতে হবে।
+- সর্বোচ্চ bidder নিজের stack থেকে শুরু করে target সংখ্যক rose উল্টাবে।
+- Skull উল্টে গেলে একটা কার্ড হারাবে (নিজের skull হলে নিজে বেছে নেবে, অন্যের হলে blind pick)।
+- ২ পয়েন্ট আগে যে পাবে সে winner।
 
----
-
-কোনো সমস্যা হলে আমাকে error message screenshot সহ পাঠাও — fix করে দেব। 💀
+Enjoy! 🏴‍☠️💀
