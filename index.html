@@ -1,0 +1,1131 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Skull — 🏴‍☠️ Bluffing Game</title>
+<meta name="description" content="Skull — ক্লাসিক ব্লাফিং বোর্ড গেম। অফলাইনে Pass & Play / Bot, ডেটা থাকলে Online multiplayer." />
+<meta name="theme-color" content="#0b0a14" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="icon" href="./icon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap"
+      onerror="this.remove()" />
+<style>
+  /* ==========================================================================
+     LAYOUT TOKENS
+     ========================================================================== */
+  :root {
+    --bg:        #0b0a14;
+    --bg-2:      #161329;
+    --panel:     #1c1934;
+    --panel-2:   #25224a;
+    --text:      #f3f0ff;
+    --muted:     #9b96c4;
+    --accent:    #8b5cf6;
+    --accent-2:  #6d28d9;
+    --rose:      #f43f5e;
+    --good:      #22c55e;
+    --warn:      #f59e0b;
+    --bad:       #ef4444;
+    --border:    #2a274d;
+    --radius:    14px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Hind Siliguri", system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: radial-gradient(1200px 800px at 20% -10%, #1d1840 0%, var(--bg) 60%) fixed;
+    color: var(--text); min-height: 100dvh; overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button { font-family: inherit; }
+
+  /* ==========================================================================
+     APP SHELL
+     ========================================================================== */
+  .app { max-width: 720px; margin: 0 auto; padding: 14px 14px 96px; }
+
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; padding: 6px 4px 14px;
+  }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+  .brand .logo {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: grid; place-items: center; font-size: 18px;
+  }
+  .net {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--muted);
+    padding: 4px 8px; border: 1px solid var(--border); border-radius: 999px;
+  }
+  .net .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); }
+  .net.offline .dot { background: var(--bad); }
+
+  /* ==========================================================================
+     SCREENS
+     ========================================================================== */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px; margin: 10px 0;
+  }
+  .card h2 { margin: 0 0 10px; font-size: 16px; }
+  .muted { color: var(--muted); font-size: 13px; line-height: 1.55; }
+
+  .btn {
+    appearance: none; border: 0; cursor: pointer;
+    background: var(--accent); color: #fff; font-weight: 700;
+    padding: 12px 14px; border-radius: 12px; width: 100%;
+    transition: transform .05s ease, opacity .2s ease;
+  }
+  .btn:active:not(:disabled) { transform: scale(.98); }
+  .btn[disabled] { opacity: .45; cursor: not-allowed; }
+  .btn.secondary { background: var(--panel-2); }
+  .btn.ghost     { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn.danger    { background: var(--bad); }
+  .btn.warn      { background: var(--warn); color: #1a1300; }
+  .btn.small     { padding: 8px 10px; width: auto; font-size: 13px; }
+
+  .row    { display: flex; gap: 8px; flex-wrap: wrap; }
+  .row > * { flex: 1 1 0; min-width: 0; }
+
+  input[type=text], input[type=number], select {
+    width: 100%; padding: 12px; border-radius: 10px; font-size: 15px;
+    background: var(--bg-2); color: var(--text);
+    border: 1px solid var(--border); outline: none;
+  }
+  input:focus { border-color: var(--accent); }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 8px 0 4px; }
+
+  /* ==========================================================================
+     GAME BOARD
+     ========================================================================== */
+  .phase-pill {
+    display: inline-block; padding: 4px 10px; border-radius: 999px;
+    background: var(--panel-2); font-size: 12px; color: var(--muted);
+  }
+
+  .players { display: grid; gap: 8px; margin: 10px 0; }
+  .player {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; padding: 10px 12px;
+  }
+  .player.turn { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(139,92,246,.18); }
+  .player.elim { opacity: .45; text-decoration: line-through; }
+  .player .head {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  }
+  .player .name { font-weight: 700; font-size: 14px; }
+  .player .tag  { font-size: 11px; color: var(--muted); }
+  .player .piles {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px;
+    font-size: 12px; color: var(--muted);
+  }
+  .pile { display: inline-flex; gap: 4px; align-items: center; }
+  .pile b { color: var(--text); }
+  .pts { color: var(--warn); font-weight: 700; }
+
+  /* card visuals */
+  .hand   { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .card-ui {
+    width: 64px; height: 92px; border-radius: 10px;
+    background: linear-gradient(160deg, #2b2654, #1a1633);
+    border: 1px solid var(--border);
+    display: grid; place-items: center; font-size: 30px;
+    cursor: pointer; user-select: none;
+    transition: transform .08s ease, border-color .2s;
+  }
+  .card-ui.back { background: repeating-linear-gradient(45deg, #221e44, #221e44 6px, #2c2752 6px, #2c2752 12px); color: transparent; }
+  .card-ui.rose  { color: #fda4af; }
+  .card-ui.skull { color: #f3f0ff; }
+  .card-ui:active { transform: scale(.96); }
+  .card-ui.disabled { opacity: .4; cursor: not-allowed; }
+  .stack-mini {
+    display: inline-flex; gap: 3px; margin-left: 4px; vertical-align: middle;
+  }
+  .stack-mini span {
+    width: 18px; height: 24px; border-radius: 4px;
+    background: repeating-linear-gradient(45deg, #221e44, #221e44 4px, #2c2752 4px, #2c2752 8px);
+    border: 1px solid var(--border);
+  }
+  .stack-mini span.r { background: #f43f5e; }
+  .stack-mini span.s { background: #f3f0ff; }
+
+  /* action bar */
+  .actions { display: grid; gap: 8px; margin: 10px 0; }
+
+  /* log */
+  .log {
+    background: var(--bg-2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px 10px; max-height: 140px; overflow: auto;
+    font-size: 12.5px; line-height: 1.55; color: var(--muted);
+  }
+  .log div { padding: 2px 0; border-bottom: 1px dashed transparent; }
+
+  /* modal */
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(0,0,0,.6);
+    display: none; align-items: flex-end; justify-content: center; z-index: 50;
+  }
+  .modal-bg.show { display: flex; }
+  .modal {
+    background: var(--panel); border-top: 1px solid var(--border);
+    border-radius: 18px 18px 0 0; padding: 16px;
+    width: 100%; max-width: 720px; max-height: 80vh; overflow: auto;
+  }
+  @media (min-width: 600px) {
+    .modal-bg { align-items: center; }
+    .modal { border-radius: 18px; border: 1px solid var(--border); }
+  }
+
+  /* footer nav */
+  .footer {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: rgba(11,10,20,.92); backdrop-filter: blur(6px);
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-around; padding: 8px;
+  }
+  .footer button {
+    background: transparent; border: 0; color: var(--muted);
+    font-size: 12px; font-weight: 600; padding: 6px 10px;
+  }
+  .footer button.active { color: var(--accent); }
+
+  .banner {
+    background: rgba(139,92,246,.12); border: 1px solid rgba(139,92,246,.4);
+    color: #d6cdff; border-radius: 10px; padding: 8px 10px;
+    font-size: 13px; margin: 8px 0;
+  }
+  .banner.warn { background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.5); color: #ffdca8; }
+  .banner.bad  { background: rgba(239,68,68,.12);  border-color: rgba(239,68,68,.5);  color: #ffc4c4; }
+</style>
+</head>
+
+<body>
+<div class="app">
+
+  <!-- ====================================================================== -->
+  <!-- TOP BAR                                                                 -->
+  <!-- ====================================================================== -->
+  <div class="topbar">
+    <div class="brand"><div class="logo">💀</div> Skull</div>
+    <div class="net" id="netPill"><span class="dot"></span><span id="netText">অনলাইন</span></div>
+  </div>
+
+  <!-- ====================================================================== -->
+  <!-- HOME SCREEN                                                             -->
+  <!-- ====================================================================== -->
+  <section id="screen-home" class="screen active">
+    <div class="card">
+      <h2>🏴‍☠️ মোড বাছো</h2>
+      <p class="muted">ডেটা ছাড়াও <b>Pass &amp; Play</b> বা <b>Bot</b> মোডে খেলতে পারবে। ডেটা থাকলে <b>Online</b> মোডে বন্ধুদের সাথে।</p>
+      <div class="actions">
+        <button class="btn"           data-go="passplay">👥 Pass &amp; Play (একই ফোনে)</button>
+        <button class="btn secondary" data-go="bot">🤖 Bot-এর সাথে</button>
+        <button class="btn secondary" id="goOnline">🌐 Online Multiplayer</button>
+        <button class="btn ghost"     data-go="rules">📖 নিয়ম পড়ো</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================================================================== -->
+  <!-- PASS & PLAY SETUP                                                       -->
+  <!-- ====================================================================== -->
+  <section id="screen-passplay" class="screen">
+    <div class="card">
+      <h2>👥 Pass &amp; Play</h2>
+      <p class="muted">২–৬ জন। প্রত্যেক pass করার সময় ফোন সংশ্লিষ্ট খেলোয়াড়কে দাও — নিজের হাত শুধু সে-ই দেখবে।</p>
+      <label>খেলোয়াড়ের সংখ্যা</label>
+      <select id="ppCount">
+        <option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option>
+      </select>
+      <div id="ppNames"></div>
+      <div class="actions">
+        <button class="btn" id="ppStart">🎮 গেম শুরু</button>
+        <button class="btn ghost" data-back>← ফিরে যাও</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================================================================== -->
+  <!-- BOT SETUP                                                               -->
+  <!-- ====================================================================== -->
+  <section id="screen-bot" class="screen">
+    <div class="card">
+      <h2>🤖 Bot-এর সাথে</h2>
+      <label>তোমার নাম</label>
+      <input id="botMyName" type="text" value="তুমি" maxlength="14" />
+      <label>Bot সংখ্যা (১–৫)</label>
+      <select id="botCount">
+        <option selected>2</option><option>3</option><option>4</option><option>5</option>
+      </select>
+      <div class="actions">
+        <button class="btn" id="botStart">🎮 গেম শুরু</button>
+        <button class="btn ghost" data-back>← ফিরে যাও</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================================================================== -->
+  <!-- ONLINE SETUP                                                            -->
+  <!-- ====================================================================== -->
+  <section id="screen-online" class="screen">
+    <div class="card">
+      <h2>🌐 Online Multiplayer</h2>
+      <div id="onlineOffline" class="banner bad" style="display:none">
+        ⚠️ এই মুহূর্তে ডেটা সংযোগ নেই। Online মোড খেলতে data/Wi-Fi দরকার।
+        এর বদলে <b>Pass &amp; Play</b> বা <b>Bot</b> মোড ট্রাই করো।
+      </div>
+      <label>সার্ভার URL (এক বার দিলে browser মনে রাখবে)</label>
+      <input id="srvUrl" type="text" placeholder="https://skull-server-xxxx.onrender.com" />
+      <label>তোমার নাম</label>
+      <input id="onName" type="text" maxlength="14" />
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="btnCreate">➕ নতুন রুম</button>
+        <button class="btn secondary" id="btnJoin">🔑 রুমে ঢুকো</button>
+      </div>
+      <div id="joinBox" style="display:none; margin-top:10px">
+        <label>রুম কোড (৫ অক্ষর)</label>
+        <input id="joinCode" type="text" maxlength="5" style="text-transform:uppercase" />
+        <button class="btn" id="btnJoinGo" style="margin-top:8px">Join</button>
+      </div>
+      <div class="actions" style="margin-top:10px">
+        <button class="btn ghost" data-back>← ফিরে যাও</button>
+      </div>
+    </div>
+
+    <div class="card" id="lobbyCard" style="display:none">
+      <h2>🪑 লবি</h2>
+      <p class="muted">রুম কোড: <b id="lobbyCode" style="font-size:18px; letter-spacing:2px"></b></p>
+      <div id="lobbyPlayers"></div>
+      <div class="actions">
+        <button class="btn" id="btnStartGame">🎮 গেম শুরু করো (host)</button>
+        <button class="btn ghost"   id="btnLeaveRoom">← রুম ছাড়ো</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================================================================== -->
+  <!-- RULES                                                                   -->
+  <!-- ====================================================================== -->
+  <section id="screen-rules" class="screen">
+    <div class="card">
+      <h2>📖 Skull-এর নিয়ম</h2>
+      <p class="muted">
+        প্রতি খেলোয়াড় ৪টা কার্ড পায়: ৩টা 🌹 গোলাপ + ১টা 💀 খুলি। নিজের পালায়
+        একটা কার্ড face-down রাখো অথবা বাজি ধরো — কতগুলো কার্ড face-up করতে পারবে।
+        কেউ বাজি ধরলে বাকিরা বাড়াবে বা পাস। সর্বোচ্চ bidder নিজের stack থেকে
+        শুরু করে কার্ড উল্টায়। সব গোলাপ পেলে +১ পয়েন্ট। 💀 পেলে একটা কার্ড হারায়।
+        <b>২ পয়েন্টে জয়।</b>
+      </p>
+      <div class="actions"><button class="btn ghost" data-back>← হোম</button></div>
+    </div>
+  </section>
+
+  <!-- ====================================================================== -->
+  <!-- GAME SCREEN                                                             -->
+  <!-- ====================================================================== -->
+  <section id="screen-game" class="screen">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; gap:8px; align-items:center">
+        <span class="phase-pill" id="phasePill">…</span>
+        <button class="btn ghost small" id="btnQuit">⨯ বের হও</button>
+      </div>
+      <div id="passBanner" class="banner" style="display:none"></div>
+      <div id="turnBanner" class="banner" style="display:none"></div>
+      <div class="players" id="players"></div>
+
+      <h2 style="margin-top:14px">তোমার হাত</h2>
+      <div class="hand" id="myHand"></div>
+
+      <div class="actions" id="actionArea"></div>
+
+      <h2 style="margin-top:14px">📜 Log</h2>
+      <div class="log" id="logBox"></div>
+    </div>
+  </section>
+
+</div>
+
+<!-- modal (bidding / lose card) -->
+<div class="modal-bg" id="modalBg"><div class="modal" id="modal"></div></div>
+
+<!-- ========================================================================== -->
+<!-- SERVICE WORKER REGISTRATION                                                 -->
+<!-- ========================================================================== -->
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    });
+  }
+</script>
+
+<!-- ========================================================================== -->
+<!-- SKULL ENGINE (mirrors backend/engine.js)                                    -->
+<!-- ========================================================================== -->
+<script>
+const POINTS_TO_WIN = 2;
+const uid   = () => Math.random().toString(36).slice(2, 9);
+const clone = (o) => JSON.parse(JSON.stringify(o));
+
+const activePlayers     = (g) => g.players.filter((p) => !p.eliminated);
+const totalCardsOnTable = (g) => g.players.reduce((s, p) => s + p.stack.length, 0);
+
+function nextActiveIdx(g, fromIdx) {
+  const n = g.players.length;
+  for (let i = 1; i <= n; i++) {
+    const idx = (fromIdx + i) % n;
+    if (!g.players[idx].eliminated) return idx;
+  }
+  return fromIdx;
+}
+function logg(g, msg) { g.log = [...g.log.slice(-30), msg]; }
+
+function createGame(specs) {
+  const players = specs.map((p) => ({
+    id: p.id || uid(), name: p.name, isBot: !!p.isBot,
+    hand: ["rose","rose","rose","skull"], stack: [], revealed: [],
+    points: 0, eliminated: false,
+  }));
+  return {
+    players, currentPlayerIdx: 0, phase: "placing",
+    bid: null, reveal: null, pendingLoss: null,
+    round: 1, log: ["গেম শুরু! প্রথমে সবাই একটা করে কার্ড রাখো।"],
+    startingPlayerId: players[0].id, winnerId: null,
+  };
+}
+
+function placeCard(g, pid, card) {
+  if (g.phase !== "placing") return g;
+  const ng = clone(g);
+  const p = ng.players.find((x) => x.id === pid);
+  if (!p || ng.players[ng.currentPlayerIdx].id !== pid) return g;
+  const idx = p.hand.indexOf(card);
+  if (idx < 0) return g;
+  p.hand.splice(idx, 1); p.stack.push(card);
+  logg(ng, `${p.name} একটা কার্ড রাখলো।`);
+  ng.currentPlayerIdx = nextActiveIdx(ng, ng.currentPlayerIdx);
+  return ng;
+}
+function startBid(g, pid, amount) {
+  if (g.phase !== "placing") return g;
+  const total = totalCardsOnTable(g);
+  if (amount < 1 || amount > total) return g;
+  if (!activePlayers(g).every((p) => p.stack.length >= 1)) return g;
+  if (g.players[g.currentPlayerIdx].id !== pid) return g;
+  const ng = clone(g);
+  ng.phase = "bidding";
+  ng.bid = { amount, bidderId: pid, passed: [] };
+  logg(ng, `${ng.players.find((x) => x.id === pid).name} বাজি ধরলো: ${amount}!`);
+  ng.currentPlayerIdx = nextActiveIdx(ng, ng.players.findIndex((x) => x.id === pid));
+  return maybeStartReveal(ng);
+}
+function raiseBid(g, pid, amount) {
+  if (g.phase !== "bidding" || !g.bid) return g;
+  if (g.bid.passed.includes(pid)) return g;
+  if (amount <= g.bid.amount || amount > totalCardsOnTable(g)) return g;
+  const ng = clone(g);
+  ng.bid = { ...ng.bid, amount, bidderId: pid };
+  logg(ng, `${ng.players.find((x) => x.id === pid).name} বাজি বাড়ালো: ${amount}!`);
+  ng.currentPlayerIdx = nextActiveIdx(ng, ng.players.findIndex((x) => x.id === pid));
+  while (ng.bid.passed.includes(ng.players[ng.currentPlayerIdx].id))
+    ng.currentPlayerIdx = nextActiveIdx(ng, ng.currentPlayerIdx);
+  return maybeStartReveal(ng);
+}
+function passBid(g, pid) {
+  if (g.phase !== "bidding" || !g.bid) return g;
+  if (g.bid.bidderId === pid) return g;
+  const ng = clone(g);
+  ng.bid.passed = [...ng.bid.passed, pid];
+  logg(ng, `${ng.players.find((x) => x.id === pid).name} পাস করলো।`);
+  ng.currentPlayerIdx = nextActiveIdx(ng, ng.players.findIndex((x) => x.id === pid));
+  while (ng.bid.passed.includes(ng.players[ng.currentPlayerIdx].id))
+    ng.currentPlayerIdx = nextActiveIdx(ng, ng.currentPlayerIdx);
+  return maybeStartReveal(ng);
+}
+function maybeStartReveal(g) {
+  if (g.phase !== "bidding" || !g.bid) return g;
+  const actives = activePlayers(g).map((p) => p.id);
+  const others = actives.filter((id) => id !== g.bid.bidderId);
+  if (!others.every((id) => g.bid.passed.includes(id))) return g;
+  const ng = clone(g);
+  ng.phase = "revealing";
+  const bidder = ng.players.find((p) => p.id === ng.bid.bidderId);
+  ng.reveal = { bidderId: bidder.id, target: ng.bid.amount, flipped: 0, hitSkull: false };
+  logg(ng, `${bidder.name} কে ${ng.bid.amount} কার্ড উল্টাতে হবে। নিজের স্ট্যাক থেকে শুরু!`);
+  return autoFlipOwn(ng);
+}
+function autoFlipOwn(g) {
+  let ng = g;
+  while (ng.phase === "revealing" && ng.reveal &&
+         !ng.reveal.hitSkull && ng.reveal.flipped < ng.reveal.target) {
+    const bidder = ng.players.find((p) => p.id === ng.reveal.bidderId);
+    if (bidder.stack.length === 0) break;
+    ng = flipFromPlayer(ng, bidder.id);
+  }
+  return ng;
+}
+function flipFromPlayer(g, pid) {
+  if (g.phase !== "revealing" || !g.reveal) return g;
+  const ng = clone(g);
+  const t = ng.players.find((p) => p.id === pid);
+  if (!t || t.stack.length === 0) return g;
+  const card = t.stack.pop();
+  t.revealed.push(card);
+  ng.reveal.flipped += 1;
+  logg(ng, `${t.name}: ${card === "skull" ? "💀 SKULL" : "🌹 গোলাপ"}!`);
+  if (card === "skull") {
+    ng.reveal.hitSkull = true;
+    ng.reveal.skullOwnerId = t.id;
+    return resolveFailure(ng);
+  }
+  if (ng.reveal.flipped >= ng.reveal.target) return resolveSuccess(ng);
+  return ng;
+}
+function resolveSuccess(g) {
+  const ng = clone(g);
+  const b = ng.players.find((p) => p.id === ng.reveal.bidderId);
+  b.points += 1;
+  logg(ng, `🎉 ${b.name} জিতলো! (${b.points}/${POINTS_TO_WIN})`);
+  if (b.points >= POINTS_TO_WIN) {
+    ng.phase = "gameOver"; ng.winnerId = b.id;
+    logg(ng, `👑 ${b.name} গেম জিতলো!`);
+    return ng;
+  }
+  ng.startingPlayerId = b.id;
+  return resetRound(ng);
+}
+function resolveFailure(g) {
+  const ng = clone(g);
+  const b = ng.players.find((p) => p.id === ng.reveal.bidderId);
+  logg(ng, `💀 ${b.name} skull-এ আঘাত পেলো!`);
+  ng.pendingLoss = { loserId: b.id, chooseFromOwnSkull: ng.reveal.skullOwnerId === b.id };
+  ng.phase = "lostCardPick";
+  return ng;
+}
+function loseCard(g, idx) {
+  if (g.phase !== "lostCardPick" || !g.pendingLoss) return g;
+  const ng = clone(g);
+  const l = ng.players.find((p) => p.id === ng.pendingLoss.loserId);
+  const all = [];
+  l.hand.forEach((c, i)     => all.push({ from: "hand",     idx: i, card: c }));
+  l.stack.forEach((c, i)    => all.push({ from: "stack",    idx: i, card: c }));
+  l.revealed.forEach((c, i) => all.push({ from: "revealed", idx: i, card: c }));
+  if (all.length === 0) return ng;
+  const pk = all[Math.max(0, Math.min(idx, all.length - 1))];
+  l[pk.from].splice(pk.idx, 1);
+  logg(ng, `${l.name} একটা ${pk.card === "skull" ? "💀 skull" : "🌹 গোলাপ"} হারালো।`);
+  if (l.hand.length + l.stack.length + l.revealed.length === 0) {
+    l.eliminated = true;
+    logg(ng, `☠️ ${l.name} বাদ পড়লো!`);
+  }
+  ng.pendingLoss = null;
+  const alive = activePlayers(ng);
+  if (alive.length === 1) {
+    ng.phase = "gameOver"; ng.winnerId = alive[0].id;
+    logg(ng, `👑 ${alive[0].name} জয়ী!`);
+    return ng;
+  }
+  ng.startingPlayerId = l.eliminated
+    ? (alive[(alive.findIndex((a) => a.id === l.id) + 1) % alive.length]?.id ?? alive[0].id)
+    : l.id;
+  return resetRound(ng);
+}
+function autoLoseRandom(g) {
+  if (g.phase !== "lostCardPick" || !g.pendingLoss) return g;
+  const l = g.players.find((p) => p.id === g.pendingLoss.loserId);
+  const total = l.hand.length + l.stack.length + l.revealed.length;
+  if (total === 0) return loseCard(g, 0);
+  return loseCard(g, Math.floor(Math.random() * total));
+}
+function resetRound(g) {
+  const ng = clone(g);
+  for (const p of ng.players) {
+    p.hand = [...p.hand, ...p.stack, ...p.revealed];
+    p.stack = []; p.revealed = [];
+  }
+  ng.bid = null; ng.reveal = null; ng.pendingLoss = null;
+  ng.phase = "placing"; ng.round += 1;
+  const i = ng.players.findIndex((p) => p.id === ng.startingPlayerId);
+  ng.currentPlayerIdx = i >= 0 && !ng.players[i].eliminated ? i : nextActiveIdx(ng, i >= 0 ? i : 0);
+  logg(ng, `— রাউন্ড ${ng.round} —`);
+  return ng;
+}
+</script>
+
+<!-- ========================================================================== -->
+<!-- BOT AI                                                                      -->
+<!-- ========================================================================== -->
+<script>
+function botStep(g) {
+  // lost-card pick
+  if (g.phase === "lostCardPick" && g.pendingLoss) {
+    const loser = g.players.find((p) => p.id === g.pendingLoss.loserId);
+    if (!loser.isBot) return null;
+    if (!g.pendingLoss.chooseFromOwnSkull) return { next: autoLoseRandom(g), delay: 700 };
+    const list = [
+      ...loser.hand.map((c) => c), ...loser.stack.map((c) => c), ...loser.revealed.map((c) => c),
+    ];
+    const skullIdx = list.indexOf("skull");
+    return { next: loseCard(g, skullIdx >= 0 ? skullIdx : 0), delay: 700 };
+  }
+  // revealing: bot bidder must pick whose stack
+  if (g.phase === "revealing" && g.reveal) {
+    const b = g.players.find((p) => p.id === g.reveal.bidderId);
+    if (!b.isBot) return null;
+    if (b.stack.length > 0) return { next: flipFromPlayer(g, b.id), delay: 600 };
+    const targets = activePlayers(g).filter((p) => p.id !== b.id && p.stack.length > 0);
+    if (!targets.length) return null;
+    targets.sort((a, b) => a.stack.length - b.stack.length);
+    return { next: flipFromPlayer(g, targets[0].id), delay: 800 };
+  }
+  const cur = g.players[g.currentPlayerIdx];
+  if (!cur?.isBot) return null;
+
+  // bidding
+  if (g.phase === "bidding" && g.bid) {
+    if (g.bid.passed.includes(cur.id) || g.bid.bidderId === cur.id) return null;
+    const total = totalCardsOnTable(g);
+    const myStack = cur.stack;
+    const ownSkullIdx = myStack.lastIndexOf("skull");
+    const safeOwn = ownSkullIdx >= 0 ? myStack.length - 1 - ownSkullIdx : myStack.length;
+    const others = total - myStack.length;
+    const expectedSafe = safeOwn + others * 0.55;
+    const next = g.bid.amount + 1;
+    if (next <= Math.min(total, Math.floor(expectedSafe)) && Math.random() < 0.55) {
+      return { next: raiseBid(g, cur.id, next), delay: 900 };
+    }
+    return { next: passBid(g, cur.id), delay: 800 };
+  }
+  // placing
+  if (g.phase === "placing") {
+    const allPlaced = activePlayers(g).every((p) => p.stack.length >= 1);
+    const total = totalCardsOnTable(g);
+    const hasSkull = cur.hand.includes("skull");
+    const playedSkull = cur.stack.includes("skull");
+    if (allPlaced && Math.random() < 0.25 && total >= 1) {
+      const bid = Math.max(1, Math.min(total, 1 + (playedSkull ? 0 : Math.floor(Math.random() * 2))));
+      return { next: startBid(g, cur.id, bid), delay: 900 };
+    }
+    let card;
+    if (cur.stack.length === 0 && hasSkull && Math.random() < 0.3) card = "skull";
+    else if (cur.hand.includes("rose")) card = "rose";
+    else card = "skull";
+    return { next: placeCard(g, cur.id, card), delay: 800 };
+  }
+  return null;
+}
+</script>
+
+<!-- ========================================================================== -->
+<!-- UI / CONTROLLER                                                             -->
+<!-- ========================================================================== -->
+<script>
+// ----- network status pill -------------------------------------------------
+const netPill = document.getElementById("netPill");
+const netText = document.getElementById("netText");
+function refreshNet() {
+  const on = navigator.onLine;
+  netPill.classList.toggle("offline", !on);
+  netText.textContent = on ? "অনলাইন" : "অফলাইন";
+  document.getElementById("onlineOffline").style.display = on ? "none" : "block";
+}
+window.addEventListener("online",  refreshNet);
+window.addEventListener("offline", refreshNet);
+refreshNet();
+
+// ----- screen routing ------------------------------------------------------
+function go(name) {
+  document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
+  document.getElementById("screen-" + name).classList.add("active");
+  if (name !== "game") closeModal();
+}
+document.querySelectorAll("[data-go]").forEach((b) =>
+  b.addEventListener("click", () => go(b.dataset.go)),
+);
+document.querySelectorAll("[data-back]").forEach((b) =>
+  b.addEventListener("click", () => go("home")),
+);
+document.getElementById("goOnline").addEventListener("click", () => {
+  document.getElementById("srvUrl").value = localStorage.getItem("skull.srv") || "";
+  document.getElementById("onName").value = localStorage.getItem("skull.name") || "Player";
+  go("online");
+});
+
+// ----- Pass & Play setup ---------------------------------------------------
+const ppCount = document.getElementById("ppCount");
+const ppNames = document.getElementById("ppNames");
+function renderPpNames() {
+  const n = parseInt(ppCount.value, 10);
+  ppNames.innerHTML = "";
+  for (let i = 0; i < n; i++) {
+    const l = document.createElement("label"); l.textContent = `খেলোয়াড় ${i + 1}-এর নাম`;
+    const inp = document.createElement("input"); inp.type = "text"; inp.maxLength = 14;
+    inp.value = `P${i + 1}`; inp.dataset.idx = i;
+    ppNames.append(l, inp);
+  }
+}
+ppCount.addEventListener("change", renderPpNames); renderPpNames();
+document.getElementById("ppStart").addEventListener("click", () => {
+  const specs = [...ppNames.querySelectorAll("input")].map((i) => ({
+    name: (i.value || `P${+i.dataset.idx + 1}`).slice(0, 14), isBot: false,
+  }));
+  startLocalGame("passplay", specs);
+});
+
+// ----- Bot setup -----------------------------------------------------------
+document.getElementById("botStart").addEventListener("click", () => {
+  const myName = (document.getElementById("botMyName").value || "তুমি").slice(0, 14);
+  const n = parseInt(document.getElementById("botCount").value, 10);
+  const specs = [{ name: myName, isBot: false }];
+  for (let i = 1; i <= n; i++) specs.push({ name: `Bot ${i}`, isBot: true });
+  startLocalGame("bot", specs);
+});
+
+// ============================================================================
+// LOCAL GAME (Pass & Play + Bot)
+// ============================================================================
+let mode    = "passplay"; // "passplay" | "bot" | "online"
+let gstate  = null;
+let myLocalId = null;     // current viewer (in passplay, rotates with turn; in bot fixed)
+let passNeeded = false;   // need "tap to pass phone" gate
+
+function startLocalGame(m, specs) {
+  mode = m;
+  gstate = createGame(specs);
+  if (mode === "bot") myLocalId = gstate.players[0].id;     // human is always first
+  else                myLocalId = gstate.players[gstate.currentPlayerIdx].id;
+  passNeeded = false;
+  go("game");
+  render();
+  scheduleBot();
+}
+
+// ============================================================================
+// RENDER
+// ============================================================================
+const $   = (id) => document.getElementById(id);
+const phasePill = $("phasePill");
+const playersEl = $("players");
+const myHandEl  = $("myHand");
+const actionEl  = $("actionArea");
+const logEl     = $("logBox");
+const turnBan   = $("turnBanner");
+const passBan   = $("passBanner");
+
+function viewerForRender() {
+  // online: myLocalId is set from server
+  // bot:    fixed human
+  // passplay: current player after they tap "Ready"
+  if (mode === "online") return myLocalId;
+  if (mode === "bot")    return myLocalId;
+  return myLocalId; // updated when player taps Ready
+}
+
+function render() {
+  if (!gstate) return;
+  const g = gstate;
+  phasePill.textContent =
+    g.phase === "placing"       ? `Round ${g.round} • কার্ড রাখো বা বাজি ধরো`
+  : g.phase === "bidding"       ? `Round ${g.round} • বাজি চলছে (top: ${g.bid?.amount})`
+  : g.phase === "revealing"     ? `Round ${g.round} • উল্টাচ্ছে (${g.reveal.flipped}/${g.reveal.target})`
+  : g.phase === "lostCardPick"  ? `Round ${g.round} • কার্ড হারানোর সময়`
+  : g.phase === "gameOver"      ? `🏆 গেম শেষ`
+  : g.phase;
+
+  // pass-phone banner (passplay only)
+  const cur = g.players[g.currentPlayerIdx];
+  const viewer = viewerForRender();
+  if (mode === "passplay" && passNeeded) {
+    passBan.style.display = "block";
+    passBan.innerHTML = `📱 ফোনটা <b>${cur.name}</b>-কে দাও — তৈরি হলে নিচে চাপো।`;
+  } else passBan.style.display = "none";
+
+  // turn banner
+  turnBan.style.display = "block";
+  if (g.phase === "gameOver") {
+    const w = g.players.find((p) => p.id === g.winnerId);
+    turnBan.className = "banner";
+    turnBan.innerHTML = `🏆 জিতেছে <b>${w?.name ?? "?"}</b>।`;
+  } else if (g.phase === "revealing" && g.reveal) {
+    const b = g.players.find((p) => p.id === g.reveal.bidderId);
+    turnBan.className = "banner warn";
+    turnBan.innerHTML = `🎯 <b>${b.name}</b> উল্টাচ্ছে। বাকি ${g.reveal.target - g.reveal.flipped}।`;
+  } else if (g.phase === "lostCardPick" && g.pendingLoss) {
+    const l = g.players.find((p) => p.id === g.pendingLoss.loserId);
+    turnBan.className = "banner bad";
+    turnBan.innerHTML = `💀 <b>${l.name}</b> একটা কার্ড হারাবে।`;
+  } else {
+    turnBan.className = "banner";
+    turnBan.innerHTML = `🎮 পালা: <b>${cur.name}</b>${cur.isBot ? " (bot)" : ""}`;
+  }
+
+  // players list
+  playersEl.innerHTML = "";
+  g.players.forEach((p, idx) => {
+    const isTurn =
+      (g.phase === "placing"     && idx === g.currentPlayerIdx) ||
+      (g.phase === "bidding"     && idx === g.currentPlayerIdx) ||
+      (g.phase === "revealing"   && g.reveal?.bidderId === p.id) ||
+      (g.phase === "lostCardPick"&& g.pendingLoss?.loserId === p.id);
+    const div = document.createElement("div");
+    div.className = "player" + (isTurn ? " turn" : "") + (p.eliminated ? " elim" : "");
+    div.innerHTML = `
+      <div class="head">
+        <div>
+          <span class="name">${escapeHtml(p.name)}</span>
+          <span class="tag">${p.isBot ? "🤖" : ""}${p === g.players[0] && mode === "online" ? "" : ""}</span>
+        </div>
+        <div class="pts">⭐ ${p.points}/${POINTS_TO_WIN}</div>
+      </div>
+      <div class="piles">
+        <span class="pile">✋ <b>${p.hand.length}</b></span>
+        <span class="pile">📚 <b>${p.stack.length}</b>
+          <span class="stack-mini">${p.stack.map(() => `<span></span>`).join("")}</span>
+        </span>
+        <span class="pile">👁 <b>${p.revealed.length}</b>
+          <span class="stack-mini">${p.revealed.map((c) => `<span class="${c==="skull"?"s":"r"}"></span>`).join("")}</span>
+        </span>
+      </div>
+    `;
+    // in revealing phase, allow tapping opponent stack to flip from
+    if (g.phase === "revealing" && g.reveal && g.reveal.bidderId === viewer && p.id !== viewer && p.stack.length > 0) {
+      div.style.cursor = "pointer";
+      div.addEventListener("click", () => dispatch({ type: "flip", targetId: p.id }));
+    }
+    playersEl.appendChild(div);
+  });
+
+  // my hand
+  renderHand(viewer);
+  // actions
+  renderActions(viewer);
+
+  // log
+  logEl.innerHTML = g.log.map((l) => `<div>${escapeHtml(l)}</div>`).join("");
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+function renderHand(viewerId) {
+  const g = gstate;
+  myHandEl.innerHTML = "";
+  if (!viewerId) return;
+  const me = g.players.find((p) => p.id === viewerId);
+  if (!me) return;
+  // hidden during pass-phone gate
+  if (mode === "passplay" && passNeeded) {
+    myHandEl.innerHTML = `<div class="muted">— hand লুকানো —</div>`;
+    return;
+  }
+  me.hand.forEach((card) => {
+    const d = document.createElement("div");
+    d.className = "card-ui " + card;
+    d.textContent = card === "skull" ? "💀" : card === "rose" ? "🌹" : "?";
+    const myTurn = g.phase === "placing" && g.players[g.currentPlayerIdx].id === viewerId;
+    if (myTurn) d.addEventListener("click", () => dispatch({ type: "place", card }), { once: true });
+    else d.classList.add("disabled");
+    myHandEl.appendChild(d);
+  });
+}
+
+function renderActions(viewerId) {
+  actionEl.innerHTML = "";
+  const g = gstate;
+  if (!viewerId) return;
+  const me = g.players.find((p) => p.id === viewerId);
+  if (!me) return;
+
+  // pass-phone gate
+  if (mode === "passplay" && passNeeded) {
+    const cur = g.players[g.currentPlayerIdx];
+    const btn = btn1("✅ আমি " + cur.name + " — তৈরি", () => {
+      myLocalId = cur.id; passNeeded = false; render();
+    });
+    actionEl.appendChild(btn);
+    return;
+  }
+
+  if (g.phase === "gameOver") {
+    actionEl.appendChild(btn1("🔁 আবার খেলো", () => dispatch({ type: "reset" })));
+    actionEl.appendChild(btn1("← হোম", () => quitGame(), "ghost"));
+    return;
+  }
+
+  const myTurn = g.players[g.currentPlayerIdx]?.id === viewerId;
+
+  if (g.phase === "placing" && myTurn) {
+    const total = totalCardsOnTable(g);
+    const allPlaced = activePlayers(g).every((p) => p.stack.length >= 1);
+    if (allPlaced && total > 0) {
+      actionEl.appendChild(btn1(`🎯 বাজি ধরো (1–${total})`, () => openBidModal(total)));
+    } else {
+      actionEl.appendChild(infoLine("সবাই অন্তত ১টা কার্ড না রাখলে বাজি ধরা যাবে না।"));
+    }
+  }
+
+  if (g.phase === "bidding" && g.bid && !g.bid.passed.includes(viewerId) && g.bid.bidderId !== viewerId && myTurn) {
+    const total = totalCardsOnTable(g);
+    actionEl.appendChild(btn1(`⬆️ বাড়াও (${g.bid.amount + 1}–${total})`, () => openBidModal(total, g.bid.amount + 1)));
+    actionEl.appendChild(btn1(`✋ পাস`, () => dispatch({ type: "pass" }), "secondary"));
+  }
+
+  if (g.phase === "revealing" && g.reveal?.bidderId === viewerId) {
+    const need = g.reveal.target - g.reveal.flipped;
+    actionEl.appendChild(infoLine(`আরো ${need} কার্ড উল্টাও — উপরের কোনো প্রতিপক্ষের স্ট্যাকে ট্যাপ করো।`));
+  }
+
+  if (g.phase === "lostCardPick" && g.pendingLoss?.loserId === viewerId) {
+    openLoseModal();
+  }
+}
+
+function btn1(label, onClick, cls = "") {
+  const b = document.createElement("button");
+  b.className = "btn " + cls;
+  b.textContent = label;
+  b.addEventListener("click", onClick);
+  return b;
+}
+function infoLine(t) { const d = document.createElement("div"); d.className = "muted"; d.textContent = t; return d; }
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
+
+// ============================================================================
+// MODAL
+// ============================================================================
+const modalBg = $("modalBg"), modal = $("modal");
+function openModal(html) { modal.innerHTML = html; modalBg.classList.add("show"); }
+function closeModal()    { modalBg.classList.remove("show"); }
+modalBg.addEventListener("click", (e) => { if (e.target === modalBg) closeModal(); });
+
+function openBidModal(total, min = 1) {
+  let v = Math.max(min, 1);
+  openModal(`
+    <h2 style="margin:0 0 8px">🎯 বাজি (${min}–${total})</h2>
+    <input id="bidV" type="number" min="${min}" max="${total}" value="${v}" />
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="bidOk">✅ বাজি ধরো</button>
+      <button class="btn ghost" id="bidNo">বাতিল</button>
+    </div>
+  `);
+  $("bidNo").onclick = closeModal;
+  $("bidOk").onclick = () => {
+    const a = Math.max(min, Math.min(total, parseInt($("bidV").value, 10) || min));
+    closeModal();
+    if (gstate.phase === "placing") dispatch({ type: "startBid", amount: a });
+    else if (gstate.phase === "bidding") dispatch({ type: "raise", amount: a });
+  };
+}
+
+function openLoseModal() {
+  const g = gstate;
+  const l = g.players.find((p) => p.id === g.pendingLoss.loserId);
+  const own = g.pendingLoss.chooseFromOwnSkull;
+  const piles = [
+    ...l.hand.map((c, i)     => ({ from: "hand",     i, c })),
+    ...l.stack.map((c, i)    => ({ from: "stack",    i, c })),
+    ...l.revealed.map((c, i) => ({ from: "revealed", i, c })),
+  ];
+  let html = `<h2>💀 একটা কার্ড হারাও</h2>`;
+  if (own) {
+    html += `<p class="muted">তুমি নিজের skull-এ আঘাত পেয়েছ — তুমি বেছে নিতে পারো কোনটা হারাবে।</p>`;
+    html += `<div class="hand">` + piles.map((p, idx) => {
+      const face = p.c === "skull" ? "💀" : "🌹";
+      return `<div class="card-ui ${p.c}" data-idx="${idx}">${face}</div>`;
+    }).join("") + `</div>`;
+  } else {
+    html += `<p class="muted">অন্য কেউ skull বসিয়েছিল — কোন কার্ড যাবে তা random হবে।</p>`;
+    html += `<button class="btn warn" id="loseRand">🎲 Random হারাও</button>`;
+  }
+  openModal(html);
+  if (own) {
+    modal.querySelectorAll(".card-ui").forEach((el) =>
+      el.addEventListener("click", () => {
+        closeModal();
+        dispatch({ type: "lose", idx: +el.dataset.idx });
+      }),
+    );
+  } else {
+    $("loseRand").onclick = () => { closeModal(); dispatch({ type: "loseRandom" }); };
+  }
+}
+
+// ============================================================================
+// DISPATCH (local or online)
+// ============================================================================
+function dispatch(action) {
+  if (mode === "online") {
+    if (!socket) return;
+    socket.emit("action", action);
+    return;
+  }
+  // local: apply, then schedule pass-phone gate / bot
+  applyLocal(action);
+  render();
+  // pass-phone gate (passplay): when next turn-player is human + different than viewer
+  if (mode === "passplay" && gstate.phase !== "gameOver") {
+    const turner = currentTurnPlayer(gstate);
+    if (turner && !turner.isBot && turner.id !== myLocalId) {
+      passNeeded = true;
+      render();
+    }
+  }
+  scheduleBot();
+}
+
+function applyLocal(a) {
+  const g = gstate;
+  const turner = currentTurnPlayer(g);
+  const aid = turner ? turner.id : myLocalId;
+  switch (a.type) {
+    case "place":      gstate = placeCard(g, aid, a.card); break;
+    case "startBid":   gstate = startBid(g, aid, a.amount); break;
+    case "raise":      gstate = raiseBid(g, aid, a.amount); break;
+    case "pass":       gstate = passBid(g, aid); break;
+    case "flip":       gstate = flipFromPlayer(g, a.targetId); break;
+    case "lose":       gstate = loseCard(g, a.idx); break;
+    case "loseRandom": gstate = autoLoseRandom(g); break;
+    case "reset": {
+      const specs = g.players.map((p) => ({ name: p.name, isBot: p.isBot }));
+      gstate = createGame(specs);
+      myLocalId = mode === "bot" ? gstate.players[0].id : gstate.players[gstate.currentPlayerIdx].id;
+      passNeeded = false;
+      break;
+    }
+  }
+}
+
+function currentTurnPlayer(g) {
+  if (g.phase === "revealing"    && g.reveal)       return g.players.find((p) => p.id === g.reveal.bidderId);
+  if (g.phase === "lostCardPick" && g.pendingLoss)  return g.players.find((p) => p.id === g.pendingLoss.loserId);
+  return g.players[g.currentPlayerIdx];
+}
+
+// ============================================================================
+// BOT SCHEDULER (local only)
+// ============================================================================
+let botTimer = null;
+function scheduleBot() {
+  clearTimeout(botTimer);
+  if (mode === "online") return;
+  const step = botStep(gstate);
+  if (!step) return;
+  botTimer = setTimeout(() => {
+    gstate = step.next;
+    render();
+    scheduleBot();
+  }, step.delay);
+}
+
+// ============================================================================
+// QUIT
+// ============================================================================
+$("btnQuit").addEventListener("click", quitGame);
+function quitGame() {
+  clearTimeout(botTimer);
+  if (mode === "online" && socket) { try { socket.disconnect(); } catch {} socket = null; }
+  gstate = null; myLocalId = null; passNeeded = false;
+  go("home");
+}
+
+// ============================================================================
+// ONLINE MULTIPLAYER (lazy-load socket.io from the server URL)
+// ============================================================================
+let socket = null;
+let roomCode = null;
+let hostId = null;
+let lobbyPlayers = [];
+
+function ensureSocketIO(srv) {
+  return new Promise((resolve, reject) => {
+    if (window.io) return resolve();
+    const s = document.createElement("script");
+    s.src = srv.replace(/\/$/, "") + "/socket.io/socket.io.js";
+    s.onload  = () => resolve();
+    s.onerror = () => reject(new Error("সার্ভার থেকে socket.io load করা গেল না"));
+    document.head.appendChild(s);
+  });
+}
+
+async function connectOnline() {
+  const srv = ($("srvUrl").value || "").trim();
+  if (!srv) { alert("সার্ভার URL দাও"); return null; }
+  if (!navigator.onLine) { alert("⚠️ ডেটা সংযোগ নেই।"); return null; }
+  localStorage.setItem("skull.srv",  srv);
+  localStorage.setItem("skull.name", $("onName").value || "Player");
+  try {
+    await ensureSocketIO(srv);
+  } catch (e) {
+    alert("সার্ভার পাওয়া যায়নি: " + e.message);
+    return null;
+  }
+  socket = window.io(srv, { transports: ["websocket", "polling"] });
+  socket.on("lobby", onLobby);
+  socket.on("state", onState);
+  socket.on("connect_error", (e) => alert("সংযোগ ব্যর্থ: " + e.message));
+  return socket;
+}
+
+$("btnCreate").addEventListener("click", async () => {
+  const s = await connectOnline(); if (!s) return;
+  s.emit("createRoom", { name: $("onName").value || "Host" }, (resp) => {
+    if (!resp?.ok) { alert("রুম তৈরি ব্যর্থ"); return; }
+    roomCode = resp.roomCode; myLocalId = resp.playerId;
+    mode = "online";
+  });
+});
+
+$("btnJoin").addEventListener("click", () => {
+  $("joinBox").style.display = "block";
+});
+$("btnJoinGo").addEventListener("click", async () => {
+  const code = ($("joinCode").value || "").trim().toUpperCase();
+  if (code.length !== 5) { alert("৫ অক্ষরের কোড দাও"); return; }
+  const s = await connectOnline(); if (!s) return;
+  s.emit("joinRoom", { code, name: $("onName").value || "Player" }, (resp) => {
+    if (!resp?.ok) { alert(resp?.error || "Join ব্যর্থ"); return; }
+    roomCode = resp.roomCode; myLocalId = resp.playerId;
+    mode = "online";
+  });
+});
+
+$("btnLeaveRoom").addEventListener("click", () => {
+  if (socket) { try { socket.disconnect(); } catch {} socket = null; }
+  roomCode = null; hostId = null; lobbyPlayers = [];
+  $("lobbyCard").style.display = "none";
+});
+
+$("btnStartGame").addEventListener("click", () => {
+  if (socket) socket.emit("startGame");
+});
+
+function onLobby(data) {
+  roomCode = data.roomCode; hostId = data.hostId; lobbyPlayers = data.players;
+  $("lobbyCard").style.display = "block";
+  $("lobbyCode").textContent = roomCode;
+  $("lobbyPlayers").innerHTML = lobbyPlayers.map((p) =>
+    `<div class="player"><div class="head"><span class="name">${escapeHtml(p.name)}</span>
+       <span class="tag">${p.id === hostId ? "👑 host" : ""}${p.id === myLocalId ? " • তুমি" : ""}</span></div></div>`
+  ).join("");
+  $("btnStartGame").disabled = !(myLocalId === hostId && lobbyPlayers.length >= 2);
+}
+
+function onState({ state, yourId }) {
+  myLocalId = yourId;
+  gstate = state;
+  if (document.getElementById("screen-game").classList.contains("active") === false) {
+    go("game");
+  }
+  render();
+}
+</script>
+
+</body>
+</html>
