@@ -1,12 +1,7 @@
 services:
   - type: web
     name: skull-server
-    runtime: node
+    env: node
     plan: free
     buildCommand: npm install
     startCommand: npm start
-    envVars:
-      - key: NODE_VERSION
-        value: 20
-      - key: CORS_ORIGIN
-        value: "*"
