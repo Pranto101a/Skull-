@@ -200,7 +200,7 @@ export function loseCard(g, idx) {
   if (pick.from === "hand")     loser.hand.splice(pick.idx, 1);
   if (pick.from === "stack")    loser.stack.splice(pick.idx, 1);
   if (pick.from === "revealed") loser.revealed.splice(pick.idx, 1);
-  log(ng, `${loser.name} একটা ${pick.card === "skull" ? "💀 skull" : "🌹 গোলাপ"} হারালো।`);
+  log(ng, `${loser.name} একটি কার্ড হারিয়ে গেছে।`);
 
   const totalLeft = loser.hand.length + loser.stack.length + loser.revealed.length;
   if (totalLeft === 0) {

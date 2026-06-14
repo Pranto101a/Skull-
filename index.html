@@ -111,29 +111,78 @@
     display: inline-block; padding: 4px 10px; border-radius: 999px;
     background: var(--panel-2); font-size: 12px; color: var(--muted);
   }
+  .top-meta { display:flex; justify-content:space-between; align-items:center;
+    gap:8px; margin-top:6px; font-size:12px; color:var(--muted); }
+  .top-meta .chip { background:var(--panel-2); padding:4px 8px; border-radius:999px; border:1px solid var(--border); }
+  .top-meta .chip b { color: var(--text); }
 
-  .players { display: grid; gap: 8px; margin: 10px 0; }
-  .player {
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 12px; padding: 10px 12px;
+  /* BIG turn hero at top */
+  .turn-hero {
+    margin: 10px 0 12px; padding: 16px 14px; border-radius: 14px; text-align: center;
+    background:
+      radial-gradient(400px 120px at 50% -40%, rgba(139,92,246,.35), transparent 60%),
+      linear-gradient(160deg, #241c4a 0%, #1a1633 100%);
+    border: 1px solid rgba(139,92,246,.5);
+    box-shadow: 0 0 0 2px rgba(139,92,246,.10), 0 12px 30px -14px rgba(139,92,246,.65);
   }
-  .player.turn { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(139,92,246,.18); }
-  .player.elim { opacity: .45; text-decoration: line-through; }
-  .player .head {
-    display: flex; justify-content: space-between; align-items: center; gap: 8px;
-  }
-  .player .name { font-weight: 700; font-size: 14px; }
-  .player .tag  { font-size: 11px; color: var(--muted); }
-  .player .piles {
-    display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px;
-    font-size: 12px; color: var(--muted);
-  }
-  .pile { display: inline-flex; gap: 4px; align-items: center; }
-  .pile b { color: var(--text); }
-  .pts { color: var(--warn); font-weight: 700; }
+  .turn-hero .lbl { font-size: 11px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; }
+  .turn-hero .who { font-size: 28px; font-weight: 800; margin-top: 4px; letter-spacing:.5px;
+    background: linear-gradient(90deg, #fda4af, #c4b5fd); -webkit-background-clip:text; background-clip:text; color: transparent; }
+  .turn-hero .sub { font-size: 13px; color: #d6cdff; margin-top: 6px; }
+  .turn-hero.bad  { border-color: rgba(239,68,68,.55); box-shadow: 0 0 0 2px rgba(239,68,68,.10), 0 12px 30px -14px rgba(239,68,68,.65); }
+  .turn-hero.warn { border-color: rgba(245,158,11,.55); box-shadow: 0 0 0 2px rgba(245,158,11,.10), 0 12px 30px -14px rgba(245,158,11,.65); }
+  .turn-hero.good { border-color: rgba(34,197,94,.55);  box-shadow: 0 0 0 2px rgba(34,197,94,.10),  0 12px 30px -14px rgba(34,197,94,.65); }
 
-  /* card visuals */
-  .hand   { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  /* Table layout — opponents around the top "table" */
+  .table-wrap {
+    background:
+      radial-gradient(700px 240px at 50% 0%, rgba(67,30,120,.55), transparent 70%),
+      linear-gradient(180deg, #14102a 0%, #0d0a1e 100%);
+    border: 1px solid var(--border); border-radius: 16px;
+    padding: 12px 10px 14px; margin-bottom: 10px;
+  }
+  .table-wrap h3 {
+    margin: 0 4px 8px; font-size: 11px; color: var(--muted);
+    letter-spacing: 1.4px; text-transform: uppercase; font-weight: 700;
+  }
+  .seats {
+    display: flex; gap: 8px; overflow-x: auto;
+    padding: 4px 2px 8px; scrollbar-width: thin;
+  }
+  .seat {
+    flex: 0 0 auto; min-width: 140px;
+    background: linear-gradient(180deg, #1f1b3e, #18152e);
+    border: 1px solid var(--border); border-radius: 12px;
+    padding: 10px; position: relative;
+  }
+  .seat.me     { border-color: rgba(34,197,94,.55); }
+  .seat.turn   { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(139,92,246,.25), 0 0 18px rgba(139,92,246,.4); }
+  .seat.target { border-color: var(--warn);   box-shadow: 0 0 0 2px rgba(245,158,11,.30), 0 0 22px rgba(245,158,11,.55); cursor: pointer; animation: tpulse 1.3s ease-in-out infinite; }
+  .seat.elim   { opacity: .4; text-decoration: line-through; }
+  @keyframes tpulse { 0%,100% { transform: scale(1);} 50% { transform: scale(1.04);} }
+  .seat .head { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+  .seat .name { font-weight: 800; font-size: 14px; }
+  .seat .pts  { color: var(--warn); font-weight: 800; font-size: 13px; }
+  .seat .meta { font-size: 11px; color: var(--muted); margin-top: 3px; display:flex; gap:8px; flex-wrap:wrap; }
+  .seat .meta b { color: var(--text); }
+  .seat .pickbadge {
+    position: absolute; top: -8px; right: -6px;
+    background: var(--warn); color:#1a1300; font-size: 10px; font-weight: 800;
+    padding: 2px 6px; border-radius: 999px;
+  }
+  .deck-mini { display: flex; gap: 2px; margin-top: 8px; min-height: 28px; align-items:flex-end; flex-wrap: wrap; }
+  .deck-mini .c {
+    width: 18px; height: 26px; border-radius: 4px; border: 1px solid var(--border);
+    background: repeating-linear-gradient(45deg, #221e44, #221e44 4px, #2c2752 4px, #2c2752 8px);
+  }
+  .deck-mini .c.r { background: #f43f5e; }
+  .deck-mini .c.s { background: #f3f0ff; }
+
+  /* legacy hidden */
+  .players { display: none; }
+
+  /* hand cards */
+  .hand   { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; justify-content:center; }
   .card-ui {
     width: 64px; height: 92px; border-radius: 10px;
     background: linear-gradient(160deg, #2b2654, #1a1633);
@@ -147,16 +196,32 @@
   .card-ui.skull { color: #f3f0ff; }
   .card-ui:active { transform: scale(.96); }
   .card-ui.disabled { opacity: .4; cursor: not-allowed; }
-  .stack-mini {
-    display: inline-flex; gap: 3px; margin-left: 4px; vertical-align: middle;
+
+  /* MY seat (bottom) */
+  .my-seat {
+    background: linear-gradient(180deg, #1a1733, #221c47);
+    border: 1px solid rgba(34,197,94,.4); border-radius: 14px;
+    padding: 12px; margin-top: 8px;
   }
-  .stack-mini span {
-    width: 18px; height: 24px; border-radius: 4px;
+  .my-seat .head { display:flex; justify-content:space-between; align-items:center;
+    font-size: 13px; color: var(--muted); }
+  .my-seat .me-name { font-weight: 800; color: var(--text); font-size: 15px; }
+  .my-seat .me-counts { display:flex; gap:10px; font-size: 12px; }
+  .my-seat .me-counts b { color: var(--text); }
+  .my-seat .me-stack { display:flex; gap:4px; margin-top: 8px; min-height: 32px; flex-wrap:wrap; }
+  .my-seat .me-stack .c {
+    width: 22px; height: 30px; border-radius: 5px; border: 1px solid var(--border);
     background: repeating-linear-gradient(45deg, #221e44, #221e44 4px, #2c2752 4px, #2c2752 8px);
-    border: 1px solid var(--border);
   }
-  .stack-mini span.r { background: #f43f5e; }
-  .stack-mini span.s { background: #f3f0ff; }
+  .my-seat .me-stack .c.r { background: #f43f5e; }
+  .my-seat .me-stack .c.s { background: #f3f0ff; }
+  .my-seat .label-row { font-size: 12px; color: var(--muted); margin-top: 10px; font-weight: 600; }
+
+  /* hidden-hand placeholder during reveal */
+  .hand-hidden {
+    background: var(--bg-2); border: 1px dashed var(--border); border-radius: 10px;
+    padding: 18px; text-align: center; color: var(--muted); font-size: 13px; margin-top:10px;
+  }
 
   /* action bar */
   .actions { display: grid; gap: 8px; margin: 10px 0; }
@@ -379,12 +444,42 @@
         <span class="phase-pill" id="phasePill">…</span>
         <button class="btn ghost small" id="btnQuit">⨯ বের হও</button>
       </div>
-      <div id="passBanner" class="banner" style="display:none"></div>
-      <div id="turnBanner" class="banner" style="display:none"></div>
-      <div class="players" id="players"></div>
+      <div class="top-meta">
+        <span class="chip">👥 প্লেয়ার: <b id="topPlayers">–</b></span>
+        <span class="chip">✋ তোমার হাত: <b id="topHand">–</b></span>
+        <span class="chip">📚 ডিস্ক: <b id="topStack">–</b></span>
+      </div>
 
-      <h2 style="margin-top:14px">তোমার হাত</h2>
-      <div class="hand" id="myHand"></div>
+      <div id="passBanner" class="banner" style="display:none"></div>
+
+      <!-- BIG turn hero -->
+      <div id="turnHero" class="turn-hero">
+        <div class="lbl">এখন পালা</div>
+        <div class="who" id="turnWho">—</div>
+        <div class="sub" id="turnSub"></div>
+      </div>
+
+      <!-- Table (opponents) -->
+      <div class="table-wrap">
+        <h3>🃏 টেবিল — প্রতিপক্ষ</h3>
+        <div class="seats" id="seats"></div>
+      </div>
+
+      <!-- My seat -->
+      <div class="my-seat" id="mySeat">
+        <div class="head">
+          <span class="me-name" id="meName">তুমি</span>
+          <span class="me-counts">
+            <span>✋ <b id="meHand">0</b></span>
+            <span>📚 <b id="meStack">0</b></span>
+            <span>👁 <b id="meRev">0</b></span>
+            <span>⭐ <b id="mePts">0</b>/2</span>
+          </span>
+        </div>
+        <div class="me-stack" id="meStackVis"></div>
+        <div class="label-row">তোমার হাত</div>
+        <div class="hand" id="myHand"></div>
+      </div>
 
       <div class="actions" id="actionArea"></div>
 
@@ -563,7 +658,7 @@ function loseCard(g, idx) {
   if (all.length === 0) return ng;
   const pk = all[Math.max(0, Math.min(idx, all.length - 1))];
   l[pk.from].splice(pk.idx, 1);
-  logg(ng, `${l.name} একটা ${pk.card === "skull" ? "💀 skull" : "🌹 গোলাপ"} হারালো।`);
+  logg(ng, `${l.name} একটি কার্ড হারিয়ে গেছে।`);
   if (l.hand.length + l.stack.length + l.revealed.length === 0) {
     l.eliminated = true;
     logg(ng, `☠️ ${l.name} বাদ পড়লো!`);
@@ -759,8 +854,7 @@ const playersEl = $("players");
 const myHandEl  = $("myHand");
 const actionEl  = $("actionArea");
 const logEl     = $("logBox");
-const turnBan   = $("turnBanner");
-const passBan   = $("passBanner");
+const passBan = $("passBanner");
 
 function viewerForRender() {
   // online: myLocalId is set from server
@@ -782,68 +876,102 @@ function render() {
   : g.phase === "gameOver"      ? `🏆 গেম শেষ`
   : g.phase;
 
-  // pass-phone banner (passplay only)
-  const cur = g.players[g.currentPlayerIdx];
+  const cur    = g.players[g.currentPlayerIdx];
   const viewer = viewerForRender();
+  const me     = g.players.find(p => p.id === viewer);
+
+  // top meta chips
+  $("topPlayers").textContent = `${activePlayers(g).length}/${g.players.length}`;
+  $("topHand").textContent    = me ? me.hand.length  : "–";
+  $("topStack").textContent   = me ? me.stack.length : "–";
+
+  // pass-phone banner (passplay only)
   if (mode === "passplay" && passNeeded) {
     passBan.style.display = "block";
-    passBan.innerHTML = `📱 ফোনটা <b>${cur.name}</b>-কে দাও — তৈরি হলে নিচে চাপো।`;
+    passBan.innerHTML = `📱 ফোনটা <b>${escapeHtml(cur.name)}</b>-কে দাও — তৈরি হলে নিচে চাপো।`;
   } else passBan.style.display = "none";
 
-  // turn banner
-  turnBan.style.display = "block";
+  // BIG turn hero
+  const hero = $("turnHero"), who = $("turnWho"), sub = $("turnSub");
+  hero.className = "turn-hero";
   if (g.phase === "gameOver") {
-    const w = g.players.find((p) => p.id === g.winnerId);
-    turnBan.className = "banner";
-    turnBan.innerHTML = `🏆 জিতেছে <b>${w?.name ?? "?"}</b>।`;
+    const w = g.players.find(p => p.id === g.winnerId);
+    hero.classList.add("good");
+    who.textContent = "🏆 " + (w?.name ?? "?");
+    sub.textContent = "জিতেছে!";
   } else if (g.phase === "revealing" && g.reveal) {
-    const b = g.players.find((p) => p.id === g.reveal.bidderId);
-    turnBan.className = "banner warn";
-    turnBan.innerHTML = `🎯 <b>${b.name}</b> উল্টাচ্ছে। বাকি ${g.reveal.target - g.reveal.flipped}।`;
+    const b = g.players.find(p => p.id === g.reveal.bidderId);
+    hero.classList.add("warn");
+    who.textContent = "🎯 " + b.name;
+    sub.textContent = `উল্টাচ্ছে — বাকি ${g.reveal.target - g.reveal.flipped}/${g.reveal.target}`;
   } else if (g.phase === "lostCardPick" && g.pendingLoss) {
-    const l = g.players.find((p) => p.id === g.pendingLoss.loserId);
-    turnBan.className = "banner bad";
-    turnBan.innerHTML = `💀 <b>${l.name}</b> একটা কার্ড হারাবে।`;
+    const l = g.players.find(p => p.id === g.pendingLoss.loserId);
+    hero.classList.add("bad");
+    who.textContent = "💀 " + l.name;
+    sub.textContent = "একটি কার্ড হারাবে";
   } else {
-    turnBan.className = "banner";
-    turnBan.innerHTML = `🎮 পালা: <b>${cur.name}</b>${cur.isBot ? " (bot)" : ""}`;
+    who.textContent = (cur.id === viewer ? "👉 তুমি (" + cur.name + ")" : cur.name) + (cur.isBot ? " 🤖" : "");
+    sub.textContent = g.phase === "bidding" ? `বাজি দিতে হবে (top ${g.bid?.amount})` : "কার্ড রাখো বা বাজি ধরো";
   }
 
-  // players list
-  playersEl.innerHTML = "";
-  g.players.forEach((p, idx) => {
-    const isTurn =
-      (g.phase === "placing"     && idx === g.currentPlayerIdx) ||
-      (g.phase === "bidding"     && idx === g.currentPlayerIdx) ||
+  // Seats — opponents only (everyone except viewer)
+  const seatsEl = $("seats");
+  seatsEl.innerHTML = "";
+  const opponents = g.players.filter(p => p.id !== viewer);
+  // if no viewer (pre-ready in passplay), show all
+  const seatList = opponents.length ? opponents : g.players;
+  seatList.forEach((p) => {
+    const isTurnSeat =
+      (g.phase === "placing"     && g.players[g.currentPlayerIdx]?.id === p.id) ||
+      (g.phase === "bidding"     && g.players[g.currentPlayerIdx]?.id === p.id) ||
       (g.phase === "revealing"   && g.reveal?.bidderId === p.id) ||
       (g.phase === "lostCardPick"&& g.pendingLoss?.loserId === p.id);
+    const isTarget =
+      g.phase === "revealing" && g.reveal && g.reveal.bidderId === viewer
+      && p.id !== viewer && p.stack.length > 0;
     const div = document.createElement("div");
-    div.className = "player" + (isTurn ? " turn" : "") + (p.eliminated ? " elim" : "");
+    div.className = "seat"
+      + (isTurnSeat ? " turn" : "")
+      + (isTarget   ? " target" : "")
+      + (p.eliminated ? " elim" : "");
     div.innerHTML = `
+      ${isTarget ? `<span class="pickbadge">টিপ দাও</span>` : ""}
       <div class="head">
-        <div>
-          <span class="name">${escapeHtml(p.name)}</span>
-          <span class="tag">${p.isBot ? "🤖" : ""}${p === g.players[0] && mode === "online" ? "" : ""}</span>
-        </div>
-        <div class="pts">⭐ ${p.points}/${POINTS_TO_WIN}</div>
+        <span class="name">${escapeHtml(p.name)}${p.isBot ? " 🤖" : ""}</span>
+        <span class="pts">⭐ ${p.points}/${POINTS_TO_WIN}</span>
       </div>
-      <div class="piles">
-        <span class="pile">✋ <b>${p.hand.length}</b></span>
-        <span class="pile">📚 <b>${p.stack.length}</b>
-          <span class="stack-mini">${p.stack.map(() => `<span></span>`).join("")}</span>
-        </span>
-        <span class="pile">👁 <b>${p.revealed.length}</b>
-          <span class="stack-mini">${p.revealed.map((c) => `<span class="${c==="skull"?"s":"r"}"></span>`).join("")}</span>
-        </span>
+      <div class="meta">
+        <span>✋ <b>${p.hand.length}</b></span>
+        <span>📚 <b>${p.stack.length}</b></span>
+        <span>👁 <b>${p.revealed.length}</b></span>
+      </div>
+      <div class="deck-mini">
+        ${p.stack.map(()=>`<div class="c"></div>`).join("")}
+        ${p.revealed.map(c=>`<div class="c ${c==="skull"?"s":"r"}"></div>`).join("")}
       </div>
     `;
-    // in revealing phase, allow tapping opponent stack to flip from
-    if (g.phase === "revealing" && g.reveal && g.reveal.bidderId === viewer && p.id !== viewer && p.stack.length > 0) {
-      div.style.cursor = "pointer";
-      div.addEventListener("click", () => dispatch({ type: "flip", targetId: p.id }));
-    }
-    playersEl.appendChild(div);
+    if (isTarget) div.addEventListener("click", () => dispatch({ type: "flip", targetId: p.id }));
+    seatsEl.appendChild(div);
   });
+  if (!seatList.length) {
+    seatsEl.innerHTML = `<div class="muted" style="padding:8px">কোনো প্রতিপক্ষ নেই</div>`;
+  }
+
+  // My seat info
+  if (me) {
+    $("meName").textContent = (me.name || "তুমি") + (g.players[g.currentPlayerIdx]?.id === me.id ? "  • তোমার পালা" : "");
+    $("meHand").textContent  = me.hand.length;
+    $("meStack").textContent = me.stack.length;
+    $("meRev").textContent   = me.revealed.length;
+    $("mePts").textContent   = me.points;
+    $("meStackVis").innerHTML =
+      me.stack.map(()=>`<div class="c"></div>`).join("")
+    + me.revealed.map(c=>`<div class="c ${c==="skull"?"s":"r"}"></div>`).join("");
+  } else {
+    $("meName").textContent = "—";
+    $("meHand").textContent = $("meStack").textContent = $("meRev").textContent = $("mePts").textContent = "0";
+    $("meStackVis").innerHTML = "";
+  }
 
   // my hand
   renderHand(viewer);
@@ -863,7 +991,12 @@ function renderHand(viewerId) {
   if (!me) return;
   // hidden during pass-phone gate
   if (mode === "passplay" && passNeeded) {
-    myHandEl.innerHTML = `<div class="muted">— hand লুকানো —</div>`;
+    myHandEl.innerHTML = `<div class="hand-hidden">— হাত লুকানো (ফোন পাস করো) —</div>`;
+    return;
+  }
+  // hide hand during reveal / lose-pick so opponents (or peeking) don't see remaining cards
+  if (g.phase === "revealing" || g.phase === "lostCardPick") {
+    myHandEl.innerHTML = `<div class="hand-hidden">🙈 কার্ড উল্টানোর সময় হাত লুকানো</div>`;
     return;
   }
   me.hand.forEach((card) => {
@@ -947,11 +1080,14 @@ function closeModal()    { modalBg.classList.remove("show"); }
 modalBg.addEventListener("click", (e) => { if (e.target === modalBg) closeModal(); });
 
 function openBidModal(total, min = 1) {
-  let v = Math.max(min, 1);
+  let opts = "";
+  for (let v = min; v <= total; v++) opts += `<option value="${v}">${v} কার্ড</option>`;
   openModal(`
-    <h2 style="margin:0 0 8px">🎯 বাজি (${min}–${total})</h2>
-    <input id="bidV" type="number" min="${min}" max="${total}" value="${v}" />
-    <div class="row" style="margin-top:10px">
+    <h2 style="margin:0 0 8px">🎯 বাজি ধরো</h2>
+    <p class="muted" style="margin:0 0 10px">কতগুলো কার্ড face-up করতে পারবে? (${min}–${total})</p>
+    <label>বাজির পরিমাণ</label>
+    <select id="bidV">${opts}</select>
+    <div class="row" style="margin-top:12px">
       <button class="btn" id="bidOk">✅ বাজি ধরো</button>
       <button class="btn ghost" id="bidNo">বাতিল</button>
     </div>
